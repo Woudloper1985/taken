@@ -6,7 +6,7 @@ public class Main {
     public static void main(String[] args) {
         var repository = new SoortRepository();
         try {
-            repository.findAllNamen().forEach(System.out:: println);
+            repository.findAll().forEach(System.out::println);
         } catch (SQLException ex) {
             ex.printStackTrace(System.err);
         }

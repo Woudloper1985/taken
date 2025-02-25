@@ -21,4 +21,24 @@ public class SoortRepository extends AbstractRepository {
             return namen;
         }
     }
+
+    List<Soort> findAll() throws SQLException {
+        var soorten = new ArrayList<Soort>();
+        var sql = """
+                select id, naam
+                from soorten
+                order by naam
+                """;
+        try (var connection = super.getConnection();
+             var statement = connection.prepareStatement(sql)) {
+            for (var result = statement.executeQuery(); result.next(); ) {
+                soorten.add(naarSoort(result));
+            }
+            return soorten;
+        }
+    }
+
+    private Soort naarSoort (ResultSet result) throws SQLException {
+        return new Soort(result.getLong("id"), result.getString("naam"));
+    }
 }
