@@ -45,4 +45,23 @@ public class BrouwerRepository extends AbstractRepository {
                 result.getString("gemeente"),
                 result.getBigDecimal("omzet"));
     }
+
+    List<Brouwer> findByOmzetTussenMinEnMax(int min, int max) throws SQLException {
+        var brouwers = new ArrayList<Brouwer>();
+        var sql = """
+                SELECT *
+                FROM brouwers
+                WHERE omzet BETWEEN ? AND ?
+                ORDER BY omzet, id
+                """;
+        try (var connection = super.getConnection();
+             var statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, min);
+            statement.setInt(2, max);
+            for (var result = statement.executeQuery(); result.next(); ) {
+                brouwers.add(naarBrouwer(result));
+            }
+            return brouwers;
+        }
+    }
 }
