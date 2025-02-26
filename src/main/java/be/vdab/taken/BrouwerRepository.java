@@ -66,17 +66,26 @@ public class BrouwerRepository extends AbstractRepository {
         }
     }
 
-    Optional<Brouwer> findById(long id) throws SQLException{
-        var sql= """
-                select id, naam, gemeente, omzet
+    Optional<Brouwer> findById(long id) throws SQLException {
+        var sql = """
+                select id, naam, adres, postcode, gemeente, omzet
                 from brouwers
                 where id = ?
                 """;
-        try(var connection = super.getConnection();
-            var statement = connection.prepareStatement(sql)){
+        try (var connection = super.getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
             var result = statement.executeQuery();
-            return result.next()?Optional.of(naarBrouwer(result)):Optional.empty();
+        /* Als je enkele specifieke kolommen wilt printen:
+
+            if (result.next()) {
+                System.out.println("ID: " + result.getLong("id"));
+                System.out.println("Naam: " + result.getString("naam"));
+                System.out.println("Postcode: " + result.getString("postcode"));
+                return Optional.of(naarBrouwer(result));
+            }
+            return Optional.empty();*/
+            return result.next() ? Optional.of(naarBrouwer(result)) : Optional.empty(); //als je alle kolommen van naarBrouwer wilt printen.
         }
     }
 }
