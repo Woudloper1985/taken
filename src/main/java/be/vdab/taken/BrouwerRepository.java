@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class BrouwerRepository extends AbstractRepository {
     BigDecimal findGemiddeldeOmzet() throws SQLException {
@@ -62,6 +63,20 @@ public class BrouwerRepository extends AbstractRepository {
                 brouwers.add(naarBrouwer(result));
             }
             return brouwers;
+        }
+    }
+
+    Optional<Brouwer> findById(long id) throws SQLException{
+        var sql= """
+                select id, naam, gemeente, omzet
+                from brouwers
+                where id = ?
+                """;
+        try(var connection = super.getConnection();
+            var statement = connection.prepareStatement(sql)){
+            statement.setLong(1, id);
+            var result = statement.executeQuery();
+            return result.next()?Optional.of(naarBrouwer(result)):Optional.empty();
         }
     }
 }
