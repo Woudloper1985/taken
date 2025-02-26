@@ -88,4 +88,17 @@ public class BrouwerRepository extends AbstractRepository {
             return result.next() ? Optional.of(naarBrouwer(result)) : Optional.empty(); //als je alle kolommen van naarBrouwer wilt printen.
         }
     }
+
+    List<Brouwer> findByOmzetTussen(int van, int tot) throws SQLException {
+        var brouwers = new ArrayList<Brouwer>();
+        try (var connection = super.getConnection();
+             var statement = connection.prepareCall("{call BrouwersMetOmzetTussen(?,?)}")) {
+            statement.setInt(1, van);
+            statement.setInt(2, tot);
+            for (var result = statement.executeQuery(); result.next(); ) {
+                brouwers.add(naarBrouwer(result));
+            }
+            return brouwers;
+        }
+    }
 }
