@@ -101,4 +101,31 @@ public class BrouwerRepository extends AbstractRepository {
             return brouwers;
         }
     }
+
+    void brouwer1GaatFailliet() throws SQLException {
+        var sqlNaarBrouwer2 = """
+                update bieren
+                set brouwerId = 2
+                where brouwerId = 1 and alcohol >= 8.5
+                """;
+        var sqlNaarBrouwer3 = """
+                update bieren
+                set brouwerId = 3
+                where brouwerId = 1 and alcohol < 8.5
+                """;
+        var sqlDeleteBrouwer1 = """
+                DELETE FROM brouwers
+                WHERE id = 1;
+                """;
+        try (var connection = super.getConnection();
+             var statementNaarBrouwer2 = connection.prepareStatement(sqlNaarBrouwer2);
+             var statementNaarBrouwer3 = connection.prepareStatement(sqlNaarBrouwer3);
+             var statementDeleteBrouwer1 = connection.prepareStatement(sqlDeleteBrouwer1);) {
+            connection.setAutoCommit(false);
+            statementNaarBrouwer2.executeUpdate();
+            statementNaarBrouwer3.executeUpdate();
+            statementDeleteBrouwer1.executeUpdate();
+            connection.commit();
+        }
+    }
 }
