@@ -44,4 +44,25 @@ public class BierRepository extends AbstractRepository {
             return bieren;
         }
     }
+
+    List<String> findBySoort(String soort) throws SQLException {
+        var namen = new ArrayList<String>();
+        String sql = """
+                SELECT naam
+                from bieren
+                where soortId = (select id from soorten where naam = ?)
+                order by naam
+                """;
+        try (var connection = super.getConnection();
+             var statement = connection.prepareStatement(sql)) {
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            connection.setAutoCommit(false);
+            statement.setString(1, soort);
+            for (var result = statement.executeQuery(); result.next(); ) {
+                namen.add(result.getString("naam"));
+            }
+            connection.commit();
+            return namen;
+        }
+    }
 }
