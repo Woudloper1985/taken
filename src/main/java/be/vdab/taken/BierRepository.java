@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BierRepository extends AbstractRepository{
+public class BierRepository extends AbstractRepository {
     int verwijderAlcoholNull() throws SQLException {
         String sql = """
                 delete from bieren
@@ -19,6 +19,7 @@ public class BierRepository extends AbstractRepository{
             return statement.executeUpdate();
         }
     }
+
     private Bier naarBier(ResultSet result) throws SQLException {
         return new Bier(result.getLong("id"), result.getString("naam"), result.getLong("brouwerId"), result.getLong("soortId"), result.getDouble("alcohol"), result.getObject("sinds", LocalDate.class));
     }

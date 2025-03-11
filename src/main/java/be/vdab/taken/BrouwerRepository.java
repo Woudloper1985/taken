@@ -1,6 +1,8 @@
 package be.vdab.taken;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -126,6 +128,28 @@ public class BrouwerRepository extends AbstractRepository {
             statementNaarBrouwer3.executeUpdate();
             statementDeleteBrouwer1.executeUpdate();
             connection.commit();
+        }
+    }
+
+    List<BrouwerMetAantal> aantalBierenPerBrouwer() throws SQLException {
+        var list = new ArrayList<BrouwerMetAantal>();
+        String sql = """
+                SELECT brouwers.naam AS brouwer, count(*) as aantal
+                from bieren.bieren
+                inner join bieren.brouwers
+                on bieren.brouwerId = brouwers.id
+                group by brouwers.naam
+                order by brouwers.naam
+                """;
+        try (Connection connection = super.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)){
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            connection.setAutoCommit(false);
+            for (ResultSet result = statement.executeQuery(); result.next();){
+                list.add(new BrouwerMetAantal(result.getString("brouwer"), result.getInt("aantal")));
+            }
+            connection.commit();
+            return list;
         }
     }
 }
