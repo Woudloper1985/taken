@@ -5,9 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class BrouwerRepository extends AbstractRepository {
     BigDecimal findGemiddeldeOmzet() throws SQLException {
@@ -142,14 +140,67 @@ public class BrouwerRepository extends AbstractRepository {
                 order by brouwers.naam
                 """;
         try (Connection connection = super.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)){
+             PreparedStatement statement = connection.prepareStatement(sql)) {
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             connection.setAutoCommit(false);
-            for (ResultSet result = statement.executeQuery(); result.next();){
+            for (ResultSet result = statement.executeQuery(); result.next(); ) {
                 list.add(new BrouwerMetAantal(result.getString("brouwer"), result.getInt("aantal")));
             }
             connection.commit();
             return list;
         }
+    }
+
+    int maakOmzetLeeg(Set<Long> ids) throws SQLException {
+        if (ids.isEmpty()) {
+            return 0;
+        }
+        var sqlUpdate = """
+                update brouwers
+                set omzet = null
+                where id in (
+                """
+                + "?,".repeat(ids.size() - 1)
+                + "?)";
+        try (var connection = super.getConnection();
+             var statementUpdate = connection.prepareStatement(sqlUpdate)) {
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            connection.setAutoCommit(false);
+            var index = 1;
+            for (var id : ids) {
+                statementUpdate.setLong(index++, id); //post-increment, dus verhoogt pas ná 1ste iteratie.
+            }
+            var aantalAangepasteRecords = statementUpdate.executeUpdate();
+            connection.commit();
+            return aantalAangepasteRecords;
+        }
+    }
+
+    Set<Long> findIds(Set<Long> ids) throws SQLException {
+        if (ids.isEmpty()) {
+            return Set.of();
+        }
+        var gevondenIds = new HashSet<Long>();
+        var sql = """
+                select id
+                from brouwers
+                where id in (
+                """
+                + "?,".repeat(ids.size() - 1)
+                + "?)";
+        try (var connection = super.getConnection();
+             var statement = connection.prepareStatement(sql)){
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            connection.setAutoCommit(false);
+            var index = 1;
+            for (var id : ids) {
+                statement.setLong(index++, id);
+            }
+            for (var result = statement.executeQuery(); result.next(); ) {
+                gevondenIds.add(result.getLong("id"));
+            }
+            return gevondenIds;
+        }
+
     }
 }
