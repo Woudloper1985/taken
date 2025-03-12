@@ -6,7 +6,7 @@ import java.sql.SQLException;
 public class RekeningRepository extends AbstractRepository {
 
     // Methode om een rekening toe te voegen aan de database
-    public void voegRekeningToe(Rekening rekening) throws SQLException {
+    public boolean voegRekeningToe(Rekening rekening) throws SQLException {
         var sql = """
                 insert into rekeningen(nummer, saldo)
                 values (?,0)
@@ -19,6 +19,7 @@ public class RekeningRepository extends AbstractRepository {
             statement.executeUpdate();
             connection.commit();
             System.out.println("Rekening succesvol toegevoegd aan de database: " + rekening.getRekeningnummer());
+            return true; // Toevoeging geslaagd
         } catch (SQLException e) {
             // Controleer op een SQL-foutcode voor duplicate key (foutcode 1062)
             if (e.getErrorCode() == 1062) {
@@ -27,6 +28,7 @@ public class RekeningRepository extends AbstractRepository {
                 // Voor andere SQL-fouten
                 e.printStackTrace(System.err);
             }
+            return false; // Toevoeging mislukt
         }
     }
 }

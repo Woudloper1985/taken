@@ -23,8 +23,9 @@ public class BankApp {
                 String rekeningnummer = scanner.nextLine();
                 try {
                     var rekening = new Rekening(rekeningnummer);
-                    repository.voegRekeningToe(rekening);
-                    System.out.println("Succes! Het rekeningnummer is gevalideerd en toegevoegd aan de database.");
+                    if (repository.voegRekeningToe(rekening)) {
+                        System.out.println("Succes! Het rekeningnummer is gevalideerd en toegevoegd aan de database.");
+                    }
                 } catch (IllegalArgumentException e) {
                     System.out.println("Fout(en): " + e.getMessage());
                 } catch (SQLException e) {
@@ -49,6 +50,6 @@ public class BankApp {
         }
 
         scanner.close();
-        System.out.println("Bedankt voor het gebruik van de BankApp. Tot ziens!");
+        System.out.println("\nBedankt voor het gebruik van de BankApp. Tot ziens!");
     }
 }
