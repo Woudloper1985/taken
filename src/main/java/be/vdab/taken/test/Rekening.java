@@ -6,4 +6,4 @@ public class Rekening {
     public Rekening(String rekeningnummer) {
         this.rekeningnummer = rekeningnummer;
     }
-} //test 1-2
+}
