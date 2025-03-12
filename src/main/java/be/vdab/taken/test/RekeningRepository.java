@@ -19,16 +19,15 @@ public class RekeningRepository extends AbstractRepository {
             statement.executeUpdate();
             connection.commit();
             System.out.println("Rekening succesvol toegevoegd aan de database: " + rekening.getRekeningnummer());
-            return true; // Toevoeging geslaagd
+            return true; // toevoeging geslaagd
         } catch (SQLException e) {
             // Controleer op een SQL-foutcode voor duplicate key (foutcode 1062)
             if (e.getErrorCode() == 1062) {
                 System.out.println("Dit rekeningnummer bestaat al en werd dus niet toegevoegd aan de database.");
             } else {
-                // Voor andere SQL-fouten
-                e.printStackTrace(System.err);
+                throw e; // voor andere fouten dan duplicate key.
             }
-            return false; // Toevoeging mislukt
         }
+        return false;
     }
 }
