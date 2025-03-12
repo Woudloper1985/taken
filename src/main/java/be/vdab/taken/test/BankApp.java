@@ -1,12 +1,20 @@
 package be.vdab.taken.test;
 
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class BankApp {
     public static void main(String[] args) {
-        nieuweRekening();
+        var repository = new RekeningRepository();
+        try {
+            repository.voegRekeningToe(nieuweRekening());
+        } catch (SQLException e) {
+            System.out.println("Het toevoegen aan de database is niet gelukt");
+            e.printStackTrace(System.err);
+        }
     }
-    public static void nieuweRekening() {
+
+    public static Rekening nieuweRekening() {
         Scanner scanner = new Scanner(System.in);
         Rekening rekening = null; // Variabele voor het aan te maken Rekening-object
 
@@ -28,8 +36,7 @@ public class BankApp {
                 System.out.println("Probeer het opnieuw.");
             }
         }
-
         scanner.close();
-        System.out.println("Bedankt voor het aanmaken van een rekeningnummer. Programma beëindigd.");
+        return rekening;
     }
 }
