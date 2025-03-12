@@ -28,6 +28,6 @@ public class RekeningRepository extends AbstractRepository {
                 throw e; // voor andere fouten dan duplicate key.
             }
         }
-        return false;
+        return false; // toevoegen niet geslaagd
     }
 }
