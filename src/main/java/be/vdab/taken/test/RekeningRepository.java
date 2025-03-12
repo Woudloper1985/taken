@@ -17,6 +17,7 @@ public class RekeningRepository extends AbstractRepository {
             connection.setAutoCommit(false);
             statement.setString(1, rekening.getRekeningnummer());
             statement.executeUpdate();
+            connection.commit();
             System.out.println("Rekening succesvol toegevoegd aan de database: " + rekening.getRekeningnummer());
         } catch (SQLException e) {
             // Controleer op een SQL-foutcode voor duplicate key (foutcode 1062)
