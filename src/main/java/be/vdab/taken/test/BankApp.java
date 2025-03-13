@@ -20,15 +20,17 @@ public class BankApp {
             case "1": // Nieuwe rekening
                 System.out.println("\nJe hebt gekozen: Nieuwe rekening aanmaken.");
                 System.out.print("Voer een Belgisch (BE) rekeningnummer in (IBAN, 16 tekens): ");
-                String rekeningnummer = scanner.nextLine();
+
+                String rekeningnummer;
                 try {
-                    var rekening = new Rekening(rekeningnummer);
-                    if (repository.voegRekeningToe(rekening)) {
-                        System.out.println("Succes! Het rekeningnummer is gevalideerd en toegevoegd aan de database.");
-                    }
+                    rekeningnummer = Rekeningnummer.valideer(scanner.nextLine());
                 } catch (IllegalArgumentException e) {
                     System.out.println("Fout(en): " + e.getMessage());
-                } catch (SQLException e) {
+                    break;
+                }
+                try {
+                    repository.voegRekeningToe(rekeningnummer);
+                    } catch (SQLException e) {
                     System.out.println("Het toevoegen aan de database is niet gelukt.");
                     System.out.println("Foutmelding: " + e.getMessage());
                 }
