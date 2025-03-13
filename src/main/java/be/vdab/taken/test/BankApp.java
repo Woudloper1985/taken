@@ -14,7 +14,7 @@ public class BankApp {
         System.out.println("Welkom bij de BankApp! Kies een optie:");
         System.out.println("1. Nieuwe rekening");
         System.out.println("2. Saldo consulteren");
-        System.out.println("3. Overschrijven (binnenkort beschikbaar)");
+        System.out.println("3. Overschrijven");
 
         System.out.print("\nMaak je keuze: ");
         String keuze = scanner.nextLine();
@@ -27,14 +27,16 @@ public class BankApp {
                 try {
                     rekeningnummer = Rekeningnummer.valideer(scanner.nextLine());
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Fout(en): " + e.getMessage());
+                    System.err.println("Foutmeldingen:");
+                    System.err.println(e.getMessage());
                     break;
                 }
                 try {
                     repository.voegRekeningToe(rekeningnummer);
                 } catch (SQLException e) {
-                    System.out.println("Het toevoegen aan de database is niet gelukt.");
-                    System.out.println("Foutmelding: " + e.getMessage());
+                    System.err.println("Het toevoegen aan de database is niet gelukt.");
+                    System.err.println("Foutmeldingen:");
+                    System.err.println(e.getMessage());
                 }
                 break;
 
@@ -45,7 +47,8 @@ public class BankApp {
                 try {
                     rekeningnummer = Rekeningnummer.valideer(scanner.nextLine());
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Fout(en): " + e.getMessage());
+                    System.err.println("Foutmeldingen:");
+                    System.err.println(e.getMessage());
                     break;
                 }
 
@@ -54,22 +57,64 @@ public class BankApp {
                     if (saldoOpt.isPresent()) {
                         System.out.println("Het saldo van rekening " + rekeningnummer + " is: " + saldoOpt.get());
                     } else {
-                        System.out.println("Rekeningnummer niet gevonden.");
+                        System.err.println("Rekeningnummer niet gevonden.");
                     }
                 } catch (SQLException e) {
-                    System.out.println("Er is een fout opgetreden bij het consulteren van het saldo.");
+                    System.err.println("Er is een fout opgetreden bij het consulteren van het saldo.");
                     e.printStackTrace(System.err);
                 }
                 break;
 
-
-            case "3": // Overschrijven (placeholder)
+            case "3":
                 System.out.println("\nJe hebt gekozen: Overschrijven.");
-                System.out.println("Deze functionaliteit is nog niet geïmplementeerd. Probeer later opnieuw.");
+
+                System.out.print("Voer het rekeningnummer van de afzender in (BE IBAN, 16 tekens): ");
+                String vanRekeningnummer;
+                try {
+                    vanRekeningnummer = Rekeningnummer.valideer(scanner.nextLine());
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Foutmeldingen:");
+                    System.err.println(e.getMessage());
+                    break;
+                }
+
+                System.out.print("Voer het rekeningnummer van de ontvanger in (BE IBAN, 16 tekens): ");
+                String naarRekeningnummer;
+                try {
+                    naarRekeningnummer = Rekeningnummer.valideer(scanner.nextLine());
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Foutmeldingen:");
+                    System.err.println(e.getMessage());
+                    break;
+                }
+
+                System.out.print("Voer het bedrag in voor de overschrijving: ");
+                BigDecimal bedrag;
+                try {
+                    bedrag = new BigDecimal(scanner.nextLine());
+                    if (bedrag.compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new IllegalArgumentException("Het bedrag moet groter zijn dan 0.");
+                    }
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Foutmeldingen:");
+                    System.err.println(e.getMessage());
+                    break;
+                }
+
+                // Voer de overschrijving uit
+                try {
+                    repository.schrijfOver(vanRekeningnummer, naarRekeningnummer, bedrag);
+                } catch (SQLException e) {
+                    System.err.println("Er is een fout opgetreden bij de overschrijving.");
+                    e.printStackTrace(System.err);
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Foutmeldingen:");
+                    System.err.println(e.getMessage());
+                }
                 break;
 
             default: // Ongeldige keuze
-                System.out.println("\nOngeldige keuze. Herstart het programma.");
+                System.err.println("Ongeldige keuze. Herstart het programma.\n");
                 break;
         }
 

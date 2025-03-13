@@ -23,7 +23,7 @@ class RekeningRepository extends AbstractRepository {
         } catch (SQLException e) {
             // Controleer op een MySQL-foutcode voor duplicate key (foutcode 1062)
             if (e.getErrorCode() == 1062) {
-                System.out.println("Dit rekeningnummer bestaat al en werd dus niet toegevoegd aan de database.");
+                System.err.println("Dit rekeningnummer bestaat al en werd dus niet toegevoegd aan de database.\n");
             } else {
                 throw e; // Voor andere fouten dan duplicate key
             }
@@ -45,90 +45,76 @@ class RekeningRepository extends AbstractRepository {
             try (var resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     BigDecimal saldo = resultSet.getBigDecimal("saldo");
-                    return Optional.of(saldo); // Als de rekening gevonden is, geef je het saldo terug
+                    return Optional.of(saldo);
                 } else {
-                    return Optional.empty(); // Als de rekening niet gevonden is, geef je een lege Optional terug
+                    return Optional.empty();
                 }
             }
         }
     }
 
     void schrijfOver(String vanRekeningnummer, String naarRekeningnummer, BigDecimal bedrag) throws SQLException {
-        StringBuilder foutmeldingen = new StringBuilder();
-
         if (vanRekeningnummer.equals(naarRekeningnummer)) {
-            foutmeldingen.append("Van- en naar-rekening kunnen niet hetzelfde zijn.\n");
+            throw new IllegalArgumentException("Van- en naar-rekening kunnen niet hetzelfde zijn.");
         }
-
         if (bedrag.compareTo(BigDecimal.ZERO) <= 0) {
-            foutmeldingen.append("Het bedrag moet groter zijn dan 0.\n");
+            throw new IllegalArgumentException("Het bedrag moet groter zijn dan 0.");
         }
 
-        Optional<BigDecimal> vanSaldoOpt = getSaldo(vanRekeningnummer);
-        if (vanSaldoOpt.isEmpty()) {
-            foutmeldingen.append("De van-rekening bestaat niet.\n");
-        }
-
-        Optional<BigDecimal> naarSaldoOpt = getSaldo(naarRekeningnummer);
-        if (naarSaldoOpt.isEmpty()) {
-            foutmeldingen.append("De naar-rekening bestaat niet.\n");
-        }
-
-        // Als er fouten zijn verzameld, toon ze dan en stop de methode
-        if (!foutmeldingen.isEmpty()) {
-            throw new IllegalArgumentException(foutmeldingen.toString());
-        }
-
-        BigDecimal vanSaldo = vanSaldoOpt.get();
-        if (vanSaldo.compareTo(bedrag) < 0) {
-            foutmeldingen.append("Het saldo van de van-rekening is onvoldoende voor de overschrijving.\n");
-        }
-
-        // Als er fouten zijn verzameld, toon ze dan en stop de methode
-        if (!foutmeldingen.isEmpty()) {
-            throw new IllegalArgumentException(foutmeldingen.toString());
-        }
-
-        // Hier wordt de transactie uitgevoerd.
-        var sqlUpdateVan = """
-                update rekeningen
-                set saldo = saldo - ?
-                where nummer = ?
+        var sqlSelect = """
+                    select saldo
+                    from rekeningen
+                    where nummer = ?
+                    for update
                 """;
-        var sqlUpdateNaar = """
-                update rekeningen
-                set saldo = saldo + ?
-                where nummer = ?
+        var sqlUpdate = """
+                    update rekeningen
+                    set saldo = saldo + ?
+                    where nummer = ?
                 """;
 
         try (var connection = super.getConnection();
-             var statementVan = connection.prepareStatement(sqlUpdateVan);
-             var statementNaar = connection.prepareStatement(sqlUpdateNaar)) {
+             var selectStmtVan = connection.prepareStatement(sqlSelect);
+             var selectStmtNaar = connection.prepareStatement(sqlSelect);
+             var updateStmt = connection.prepareStatement(sqlUpdate)) {
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             connection.setAutoCommit(false);
 
-            // Verminder het saldo van de van-rekening
-            statementVan.setBigDecimal(1, bedrag);
-            statementVan.setString(2, vanRekeningnummer);
-            statementVan.executeUpdate();
+            // Lock en lees saldo van van-rekening
+            selectStmtVan.setString(1, vanRekeningnummer);
+            try (var resultSet = selectStmtVan.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new IllegalArgumentException("De van-rekening bestaat niet.");
+                }
+                BigDecimal vanSaldo = resultSet.getBigDecimal("saldo");
+                if (vanSaldo.compareTo(bedrag) < 0) {
+                    throw new IllegalArgumentException("Saldo te laag voor overschrijving. Huidig saldo: €" + vanSaldo);
+                }
+            }
 
-            // Verhoog het saldo van de naar-rekening
-            statementNaar.setBigDecimal(1, bedrag);
-            statementNaar.setString(2, naarRekeningnummer);
-            statementNaar.executeUpdate();
+            // Lock en lees saldo van naar-rekening
+            selectStmtNaar.setString(1, naarRekeningnummer);
+            try (var resultSet = selectStmtNaar.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new IllegalArgumentException("De naar-rekening bestaat niet.");
+                }
+            }
+
+            // Verminder saldo van van-rekening
+            updateStmt.setBigDecimal(1, bedrag.negate());
+            updateStmt.setString(2, vanRekeningnummer);
+            updateStmt.executeUpdate();
+
+            // Verhoog saldo van naar-rekening
+            updateStmt.setBigDecimal(1, bedrag);
+            updateStmt.setString(2, naarRekeningnummer);
+            updateStmt.executeUpdate();
 
             connection.commit();
             System.out.println("Overschrijving succesvol uitgevoerd.");
+
         } catch (SQLException e) {
-            foutmeldingen.append("Er is een fout opgetreden bij de overschrijving.\n");
-            System.out.println(foutmeldingen.toString());
-            e.printStackTrace();
-            // Zorg ervoor dat je bij een fout de transactie rolt.
-            try (var connection = super.getConnection()) {
-                connection.rollback();
-            }
+            throw new SQLException("Fout bij overschrijving", e);
         }
     }
-
-
 }

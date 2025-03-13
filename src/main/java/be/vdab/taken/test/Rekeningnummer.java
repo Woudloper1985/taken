@@ -35,7 +35,7 @@ final class Rekeningnummer {
             foutmeldingen.append("Het samengestelde getal is ongeldig (bevat bv. niet-gehele getallen).\n");
         }
 
-        // Gooi een exception met alle fouten als er fouten zijn
+        // Gooi een exception met alle foutmeldingen als er fouten zijn
         if (!foutmeldingen.isEmpty()) {
             throw new IllegalArgumentException(foutmeldingen.toString());
         }
