@@ -111,7 +111,7 @@ class RekeningRepository extends AbstractRepository {
             updateStmt.executeUpdate();
 
             connection.commit();
-            System.out.println("Overschrijving succesvol uitgevoerd.");
+            System.out.println("\nOverschrijving succesvol uitgevoerd.");
 
         } catch (SQLException e) {
             throw new SQLException("Fout bij overschrijving", e);

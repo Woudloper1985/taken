@@ -114,7 +114,7 @@ public class BankApp {
                 break;
 
             default: // Ongeldige keuze
-                System.err.println("Ongeldige keuze. Herstart het programma.\n");
+                System.err.println("Ongeldige keuze. Herstart het programma.");
                 break;
         }
 
